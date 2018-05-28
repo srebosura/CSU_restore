@@ -47,7 +47,9 @@ class embeddedTerminal(QWidget):
 		self.button11 = QPushButton('')
 		
 		self.label_style1 = ("background-color: #605e5e; color: #39ff14;")
-		self.label_style2 = ("background-color: #c4c545; color: white;")
+		#self.label_style2 = ("background-color: #c4c545; color: white;")
+		self.label_style2 = ("background-color: #be7646; color: white;")
+		self.label_style3 = ("background-color: black; color: white;")
 		
 		self.elid = QLabel("ELID   ")
 		self.elid.setFont(QFont("Arial",16))
@@ -96,6 +98,12 @@ class embeddedTerminal(QWidget):
 		self.csac_serialEdit = QLineEdit()
 		self.csac_serialEdit.setFont(QFont("Arial",14))
 		self.csac_serialEdit.setStyleSheet(self.label_style1)
+		self.csac_alarm = QLabel("Alarm")
+		self.csac_alarm.setFont(QFont("Arial",16))
+		self.csac_alarm.setStyleSheet(self.label_style2)
+		self.csac_alarmEdit = QLineEdit()
+		self.csac_alarmEdit.setFont(QFont("Arial",14))
+		self.csac_alarmEdit.setStyleSheet(self.label_style1)
 		
 		self.bat1 = QLabel("Vbat1")
 		self.bat1.setFont(QFont("Arial",16))
@@ -133,14 +141,20 @@ class embeddedTerminal(QWidget):
 		self.vlayout = QVBoxLayout()
 		self.flayout = QHBoxLayout()
 		self.tlayout = QHBoxLayout()
-		self.clayout = QHBoxLayout()
-		self.blayout = QHBoxLayout()
+		self.ilayout = QHBoxLayout()
+		#self.clayout = QHBoxLayout()
+		self.clayout = QGridLayout()
+		#self.blayout = QHBoxLayout()
+		self.blayout = QGridLayout()
+		
 		self.button_style1 = ("QPushButton {background-color:#00b2ff; color: white;}"
 							  "QPushButton:pressed {background-color:green;}")
 		self.button_style2 = ("QPushButton {background-color:#3c84b0; color: white;}"
 							  "QPushButton:pressed {background-color:green;}")
-		self.button_style3 = ("QPushButton {background-color:#af473c; color: white;}"
+		self.button_style3 = ("QPushButton {background-color:#bb0707; color: white;}"
 							  "QPushButton:pressed {background-color:gray;}")
+		self.button_style4 = ("QPushButton {background-color:#bb5e52; color: white;}"
+							  "QPushButton:pressed {background-color:green;}")
 		#self.button_style2 = ("background-color:#3c84b0; color: white;")
 		#self.button_style3 = ("background-color:#cc1800; color: white;")
 		#self.button_style3 = ("background-color:#af473c; color: white;")
@@ -174,33 +188,38 @@ class embeddedTerminal(QWidget):
 		self.tlayout.addWidget(self.button11)
 		self.button11.setStyleSheet(self.button_style2)
 		
-		self.clayout.addWidget(self.csac_status)
-		self.clayout.addWidget(self.csac_statusEdit)
-		self.clayout.addWidget(self.csac_heatp)
-		self.clayout.addWidget(self.csac_heatpEdit)
-		self.clayout.addWidget(self.csac_contrast)
-		self.clayout.addWidget(self.csac_contrastEdit)
-		self.clayout.addWidget(self.csac_serial)
-		self.clayout.addWidget(self.csac_serialEdit)
+		self.blayout.addWidget(self.bat1,0,0)
+		self.blayout.addWidget(self.bat1Edit,0,1)
+		self.blayout.addWidget(self.bat2,0,2)
+		self.blayout.addWidget(self.bat2Edit,0,3)
+		self.blayout.addWidget(self.batv,1,0)
+		self.blayout.addWidget(self.batvEdit,1,1)
+		self.blayout.addWidget(self.ibat,1,2)
+		self.blayout.addWidget(self.ibatEdit,1,3)
+		self.blayout.addWidget(self.bsel,2,0)
+		self.blayout.addWidget(self.bselEdit,2,1)
 		
-		self.blayout.addWidget(self.bat1)
-		self.blayout.addWidget(self.bat1Edit)
-		self.blayout.addWidget(self.bat2)
-		self.blayout.addWidget(self.bat2Edit)
-		self.blayout.addWidget(self.batv)
-		self.blayout.addWidget(self.batvEdit)
-		self.blayout.addWidget(self.ibat)
-		self.blayout.addWidget(self.ibatEdit)
-		self.blayout.addWidget(self.bsel)
-		self.blayout.addWidget(self.bselEdit)
+		self.clayout.addWidget(self.csac_status,0,0)
+		self.clayout.addWidget(self.csac_statusEdit,0,1)
+		self.clayout.addWidget(self.csac_heatp,0,2)
+		self.clayout.addWidget(self.csac_heatpEdit,0,3)
+		self.clayout.addWidget(self.csac_contrast,1,0)
+		self.clayout.addWidget(self.csac_contrastEdit,1,1)
+		self.clayout.addWidget(self.csac_serial,1,2)
+		self.clayout.addWidget(self.csac_serialEdit,1,3)
+		self.clayout.addWidget(self.csac_alarm,2,0)
+		self.clayout.addWidget(self.csac_alarmEdit,2,1)
+		
 		
 		self.vlayout.addLayout(self.hlayout)
 		self.vlayout.addLayout(self.elayout)
 			
 		self.vlayout.addLayout(self.flayout)	
 		self.vlayout.addLayout(self.tlayout)
-		self.vlayout.addLayout(self.clayout)
-		self.vlayout.addLayout(self.blayout)
+		self.vlayout.addLayout(self.ilayout)
+		self.ilayout.addLayout(self.blayout)
+		self.ilayout.addLayout(self.clayout)
+		
 		
 		self.progress = QProgressBar()
 		self.vlayout.addWidget(self.progress)
@@ -261,7 +280,7 @@ class embeddedTerminal(QWidget):
 			self.elidEdit.setText("xxxx")
 			return
 		
-		self.cmd0 = '/home/obs/sam/rootfs/tools/./rootfs_restore.sh /dev/%s %s'% (self.tty_read,self.elid_id)
+		self.cmd0 = './rootfs_restore.sh /dev/%s %s'% (self.tty_read,self.elid_id)
 		self._start_process(
 			'tmux', ['send-keys', '-t', 'my_session:0', self.cmd0, 'Enter'])
 		
@@ -318,10 +337,10 @@ class embeddedTerminal(QWidget):
 			
     def _restart(self):
 		self._start_process(
-			'tmux', ['send-keys', '-t', 'my_session:0', 'a', 'Enter'])
+			'tmux', ['send-keys', '-t', 'my_session:0', 'Enter'])
 		os.system('killall minicom')
-		self._start_process(
-			'tmux', ['send-keys', '-t', 'my_session:0', 'cd /home/obs/sam/rootfs/tools', 'Enter'])
+		#self._start_process(
+		#	'tmux', ['send-keys', '-t', 'my_session:0', 'cd /home/obs/sam/rootfs/tools', 'Enter'])
 		self._start_process(
 			'tmux', ['send-keys', '-t', 'my_session:0', 'clear', 'Enter'])
 		self.housingEdit.clear()
@@ -330,6 +349,7 @@ class embeddedTerminal(QWidget):
 		self.csac_serialEdit.clear()
 		self.csac_contrastEdit.clear()
 		self.csac_heatpEdit.clear()
+		self.csac_alarmEdit.clear()
 		self.bat1Edit.clear()
 		self.bat2Edit.clear()
 		self.batvEdit.clear()
@@ -385,13 +405,14 @@ class embeddedTerminal(QWidget):
 		time.sleep(3)
 		self.tty= self.tty_portEdit.text()
 		tty = "/dev/%s"%(self.tty)
+		os.system('python exec_cmd.py /dev/%s clear 10'%(tty))
 		#ser = serial.Serial(tty,9600)
 		#ser.write("(console)")
 		#ser.close()
 		#time.sleep(2)
 		#os.system('python exec_cmd.py %s clear'%(tty))
 		self._start_process(
-			'tmux', ['send-keys', '-t', 'my_session:0', '/home/obs/sam/rootfs/tools/scripts/taptest/./taptest.sh '+tty, 'Enter'])
+			'tmux', ['send-keys', '-t', 'my_session:0', 'scripts/taptest/./taptest.sh '+tty, 'Enter'])
 	
     def _showdialog(self):
 		d = QDialog()
@@ -425,12 +446,15 @@ class embeddedTerminal(QWidget):
 		self.dlayout.addWidget(msg9)
 		
 		b1 = QPushButton("ok",d)
+		b1.setStyleSheet(self.button_style3)
 		self.dlayout.addWidget(b1)
 		b1.move(620,80)
 		d.setLayout(self.dlayout)
 		d.setWindowTitle("Help")
 		d.setWindowModality(Qt.ApplicationModal)
 		b1.clicked.connect(d.close)
+		d.setStyleSheet("background-color:black;")
+		d.setStyleSheet(self.label_style3)
 		d.exec_()
 		
     def _batt_calib(self):
@@ -519,11 +543,13 @@ class embeddedTerminal(QWidget):
 		self.blayout.addLayout(self.h8layout)
 		
 		b1 = QPushButton("Refresh")
+		
 		b2 = QPushButton("Auto Calibrate B1")
 		b3 = QPushButton("Manual/Trim B1")
 		b4 = QPushButton("Auto Calibrate B2")
 		b5 = QPushButton("Manual/Trim B2")
 		b6 = QPushButton("Batt Select")
+		b.setStyleSheet(self.button_style4)
 		
 		self.h1layout.addWidget(b2)
 		self.h3layout.addWidget(b3)
@@ -674,15 +700,21 @@ class embeddedTerminal(QWidget):
 		d = QDialog()
 		self.dlayout = QVBoxLayout()
 		msg1 = QLabel("CSU Restore Application v1.6")
+		msg1.setStyleSheet(self.label_style3)
 		msg1.setFont(QFont("Arial",12))
+		msg1.setStyleSheet(self.label_style3)
 		msg2 = QLabel("Build from : ")
 		msg2.setFont(QFont("Arial",12))
+		msg2.setStyleSheet(self.label_style3)
 		msg3 = QLabel("Python 2.7.3, PyQt4, Tmux")
 		msg3.setFont(QFont("Arial",12))
+		msg3.setStyleSheet(self.label_style3)
 		msg4 = QLabel("Not an Official Software release by Seabed, exclusive for CSU restoration only!")
 		msg4.setFont(QFont("Arial",12))
-		msg5 = QLabel("by rebosura_sd@yahoo.com.ph 21.05.18")
+		msg4.setStyleSheet(self.label_style3)
+		msg5 = QLabel("https://github/srebosura/CSU_restore 28.05.18")
 		msg5.setFont(QFont("Arial",12))
+		msg5.setStyleSheet(self.label_style3)
 		self.dlayout.addWidget(msg1)
 		self.dlayout.addWidget(msg2)
 		self.dlayout.addWidget(msg3)
@@ -690,12 +722,14 @@ class embeddedTerminal(QWidget):
 		self.dlayout.addWidget(msg5)
 		
 		b1 = QPushButton("ok",d)
+		b1.setStyleSheet(self.button_style3)
 		self.dlayout.addWidget(b1)
 		b1.move(620,80)
 		d.setLayout(self.dlayout)
 		d.setWindowTitle("About Me")
 		d.setWindowModality(Qt.ApplicationModal)
 		b1.clicked.connect(d.close)
+		d.setStyleSheet("background-color:black;")
 		d.exec_()
 		
     def _read_info(self):
@@ -771,11 +805,13 @@ class embeddedTerminal(QWidget):
 		status_r = os.popen4('head -2 /tmp/csu.tmp | tail -1')[1].read()
 		self.csac_statusEdit.setText(status_r.split(":	")[1])
 		status_r = os.popen4('head -4 /tmp/csu.tmp | tail -1')[1].read()
-		self.csac_serialEdit.setText(status_r.split(":	")[1])
+		self.csac_serialEdit.setText(status_r.split(":")[1])
 		status_r = os.popen4('head -6 /tmp/csu.tmp | tail -1')[1].read()
 		self.csac_contrastEdit.setText(status_r.split(":")[1])
 		status_r = os.popen4('head -9 /tmp/csu.tmp | tail -1')[1].read()
 		self.csac_heatpEdit.setText(status_r.split(":	")[1])
+		status_r = os.popen4('head -3 /tmp/csu.tmp | tail -1')[1].read()
+		self.csac_alarmEdit.setText(status_r.split(":	")[1])
 		self.completed = 100
 		self.progress.setValue(self.completed)
 			
@@ -790,8 +826,8 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     main = embeddedTerminal()
     main.setWindowTitle("CSU Restore v1.6			Case Atlantis 3			SeaBed GeoSolutions")
-    #main.setStyleSheet("background-color:#d7de73;")
-    main.setStyleSheet("background-color:#c4c545;")
+    #main.setStyleSheet("background-color:#c4c545;")
+    main.setStyleSheet("background-color:#be7646;")
     main.setWindowIcon(QIcon('ca3_icon.png'))
     os.system("killall tmux")
     #os.system("sudo rm /var/lib/dhcp/dhcpd.leases;sudo service isc-dhcp-server restart;rm /home/obs/.ssh/known_hosts")
