@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 ## Need to install tmux utility to run the app
-## Sam 09.05.18
+## Sam 09.05.18 v1.6
+## Sam 19.02.20 v1.7
 
 import sys
 import os
@@ -29,22 +30,23 @@ class embeddedTerminal(QWidget):
 		self.terminal.resize(800,800)
 		self.hlayout.addWidget(self.terminal)
 		
-		self.timer = QTimer(self)
+		#self.timer = QTimer(self)
 		#logo.resize(800,800)
 		##labels
-		self.button1 = QPushButton('Restore RFS')
+		self.button1 = QPushButton('RestoreRFS')
 		self.button1.setFont(QFont("Arial",14))
-		self.button2 = QPushButton('Restart')
+		self.button2 = QPushButton('Reset/Restart')
 		self.button3 = QPushButton('Flash U-Boot')
 		self.button4 = QPushButton('Exit')
-		self.button5 = QPushButton('Set Housing')
+		self.button5 = QPushButton('SetHousing')
 		self.button5.setFont(QFont("Arial",14))
-		self.button6 = QPushButton('Start Serial Comm')
+		self.button6 = QPushButton('Serial Comm/Minicom')
 		self.button7 = QPushButton('Taptest')
 		self.button8 = QPushButton('Calibrate Batt')
 		self.button9 = QPushButton('Help')
 		self.button10 = QPushButton('Get Info')
 		self.button11 = QPushButton('')
+		self.button12 = QPushButton('POWER')
 		
 		self.label_style1 = ("background-color: #605e5e; color: #39ff14;")
 		#self.label_style2 = ("background-color: #c4c545; color: white;")
@@ -66,13 +68,21 @@ class embeddedTerminal(QWidget):
 		self.elidEdit.setMaxLength(4)
 		self.housingEdit.setMaxLength(4)
 		
-		self.tty_port = QLabel("CommPort")
+		self.tty_port = QLabel("Com1")
 		self.tty_port.setFont(QFont("Arial",14))
 		self.tty_port.setStyleSheet(self.label_style2)
 		self.tty_portEdit = QLineEdit()
 		self.tty_portEdit.setFont(QFont("Arial",12))
 		self.tty_portEdit.setStyleSheet(self.label_style1)
 		self.tty_portEdit.setMaxLength(7)
+		
+		self.tty1_port = QLabel("Com2")
+		self.tty1_port.setFont(QFont("Arial",14))
+		self.tty1_port.setStyleSheet(self.label_style2)
+		self.tty1_portEdit = QLineEdit()
+		self.tty1_portEdit.setFont(QFont("Arial",12))
+		self.tty1_portEdit.setStyleSheet(self.label_style1)
+		self.tty1_portEdit.setMaxLength(7)
 		
 		self.csac_status = QLabel("CSAC Status")
 		self.csac_status.setFont(QFont("Arial",16))
@@ -142,6 +152,7 @@ class embeddedTerminal(QWidget):
 		self.flayout = QHBoxLayout()
 		self.tlayout = QHBoxLayout()
 		self.ilayout = QHBoxLayout()
+		self.playout = QHBoxLayout()
 		#self.clayout = QHBoxLayout()
 		self.clayout = QGridLayout()
 		#self.blayout = QHBoxLayout()
@@ -155,6 +166,8 @@ class embeddedTerminal(QWidget):
 							  "QPushButton:pressed {background-color:gray;}")
 		self.button_style4 = ("QPushButton {background-color:#bb5e52; color: white;}"
 							  "QPushButton:pressed {background-color:green;}")
+		self.button_style5 = ("QPushButton {background-color:green; color: white;}"
+							  "QPushButton:pressed {background-color:gray;}")					  
 		#self.button_style2 = ("background-color:#3c84b0; color: white;")
 		#self.button_style3 = ("background-color:#cc1800; color: white;")
 		#self.button_style3 = ("background-color:#af473c; color: white;")
@@ -169,6 +182,8 @@ class embeddedTerminal(QWidget):
 		self.button5.setStyleSheet(self.button_style1)
 		self.elayout.addWidget(self.tty_port)
 		self.elayout.addWidget(self.tty_portEdit)
+		self.elayout.addWidget(self.tty1_port)
+		self.elayout.addWidget(self.tty1_portEdit)
 		
 		self.flayout.addWidget(self.button3)
 		self.button3.setStyleSheet(self.button_style2)
@@ -219,6 +234,7 @@ class embeddedTerminal(QWidget):
 		self.vlayout.addLayout(self.ilayout)
 		self.ilayout.addLayout(self.blayout)
 		self.ilayout.addLayout(self.clayout)
+		self.vlayout.addLayout(self.playout)	
 		
 		
 		self.progress = QProgressBar()
@@ -237,8 +253,12 @@ class embeddedTerminal(QWidget):
 		}
 		"""
 		self.progress.setStyleSheet(progress_style)
-		self.vlayout.addWidget(self.button4)
+		
+		self.playout.addWidget(self.button12)
+		self.button12.setStyleSheet(self.button_style5)
+		self.playout.addWidget(self.button4)
 		self.button4.setStyleSheet(self.button_style3)
+		
 		
 		self.setLayout(self.vlayout)
 		self.setGeometry( 50, 50, 985, 600)
@@ -255,6 +275,7 @@ class embeddedTerminal(QWidget):
 		self.button9.clicked.connect(self._showdialog)
 		self.button10.clicked.connect(self._read_info)
 		self.button11.clicked.connect(self._aboutme)
+		self.button12.clicked.connect(self._power_switch)
 		self._find_active_tty()
 		
 		self._start_process(
@@ -268,22 +289,27 @@ class embeddedTerminal(QWidget):
 		child.start(prog, args)
 
     def _restore(self):
-		
+		os.system('killall minicom') 
+		self.timer = QTimer(self)
 		self._start_process(
 			'tmux', ['send-keys', '-t', 'my_session:0','Enter'])
 		self.elid_id = self.elidEdit.text()
 		self.tty_read = self.tty_portEdit.text()
+		self.tty1_read = self.tty1_portEdit.text()
 		if self.elid_id == "" or self.elid_id == "xxxx":
 			self._start_process(
 			'tmux', ['send-keys', '-t', 'my_session:0', 'ELID number missing !'])
 			self.progress.reset
 			self.elidEdit.setText("xxxx")
 			return
+			
+		self.cmd0 = './rootfs_restore.sh /dev/%s %s /dev/%s'% (self.tty_read,self.elid_id,self.tty1_read)
 		
-		self.cmd0 = './rootfs_restore.sh /dev/%s %s'% (self.tty_read,self.elid_id)
 		self._start_process(
 			'tmux', ['send-keys', '-t', 'my_session:0', self.cmd0, 'Enter'])
-		
+		time.sleep(2)
+		#tty1 = "/dev/%s"%(self.tty1)
+		#os.system('python csu_power.py %s'%(tty1))
 		self.progress.setTextVisible(False)
 		self.progress.setRange(0,300)
 		self.completed = 0
@@ -308,11 +334,11 @@ class embeddedTerminal(QWidget):
 				self.progress.setValue(self.completed)
 				uboot_flag = os.popen4('cat /tmp/uboot.tmp')[1].read()
 			
-				if int(uboot_flag) == 0 and self.completed == 20:
+				if int(uboot_flag) == 0 and self.completed == 30:
 					self._start_process(
 			'tmux', ['send-keys', '-t', 'my_session:0', 'C-z', 'Enter'])
 					self._start_process(
-			'tmux', ['send-keys', '-t', 'my_session:0', 'echo "Time out (20 secs passed) .... Restart !"'])
+			'tmux', ['send-keys', '-t', 'my_session:0', 'echo "Time out (30 secs passed) .... Restart !"'])
 					self.progress.reset()
 					self.timer.stop()
 					self.button1.setEnabled(True)
@@ -323,7 +349,9 @@ class embeddedTerminal(QWidget):
 					self.button7.setEnabled(True)
 					self.button8.setEnabled(True)
 					self.button10.setEnabled(True)
-					return	
+					self.completed = 0
+					os.system('rm -rf /tmp/uboot.tmp')
+					return
 		self.timer.timeout.connect(timeout)
 		self.timer.start(1000)
 		self.button1.setEnabled(False)
@@ -336,9 +364,18 @@ class embeddedTerminal(QWidget):
 		self.button10.setEnabled(False)
 			
     def _restart(self):
+		self.button1.setEnabled(False)
+		self.button2.setEnabled(False)
+		self.button3.setEnabled(False)
+		self.button5.setEnabled(False)	
+		self.button6.setEnabled(False)
+		self.button7.setEnabled(False)
+		self.button8.setEnabled(False)
+		self.button10.setEnabled(False)
 		self._start_process(
 			'tmux', ['send-keys', '-t', 'my_session:0', 'Enter'])
 		os.system('killall minicom')
+		os.system('rm -rf /tmp/uboot.tmp')
 		#self._start_process(
 		#	'tmux', ['send-keys', '-t', 'my_session:0', 'cd /home/obs/sam/rootfs/tools', 'Enter'])
 		self._start_process(
@@ -356,6 +393,14 @@ class embeddedTerminal(QWidget):
 		self.ibatEdit.clear()
 		self.bselEdit.clear()
 		self.progress.reset()
+		self.button1.setEnabled(True)
+		self.button2.setEnabled(True)
+		self.button3.setEnabled(True)
+		self.button5.setEnabled(True)	
+		self.button6.setEnabled(True)
+		self.button7.setEnabled(True)
+		self.button8.setEnabled(True)
+		self.button10.setEnabled(True)
 		
 			
     def _quit(self):
@@ -366,7 +411,10 @@ class embeddedTerminal(QWidget):
 		
     def _flash(self):
 		self.tty_read = self.tty_portEdit.text()
+		self.tty1_read = self.tty1_portEdit.text()
 		os.system('killall minicom')
+		tty1 = "/dev/%s"%(self.tty1_read)
+		os.system('python csu_power.py %s'%(tty1))
 		self._start_process(
 			'tmux', ['send-keys', '-t', 'my_session:0', './flash_uboot.sh -p %s u-boot-NAND_ais.bin'%(self.tty_read), 'Enter'])
 		
@@ -379,9 +427,12 @@ class embeddedTerminal(QWidget):
 		ser = serial.Serial(tty,9600)
 		ser.write("(console)")
 		ser.close()
-		time.sleep(1.5)
+		time.sleep(0.5)
 		self._start_process(
 			'tmux', ['send-keys', '-t', 'my_session:0', 'minicom -D '+ tty, 'Enter'])
+		time.sleep(1)
+		self._start_process(
+			'tmux', ['send-keys', '-t', 'my_session:0', 'Enter'])
 			
     def _set_housing(self):
 		self._start_process(
@@ -399,6 +450,9 @@ class embeddedTerminal(QWidget):
 		time.sleep(1)	
 		self._start_process(
 			'tmux', ['send-keys', '-t', 'my_session:0', 'echo %s >/data/etc/HOUSING'%(housing_id), 'Enter'])
+		time.sleep(1)
+		self._start_process(
+			'tmux', ['send-keys', '-t', 'my_session:0', 'sq_set_housing %s'%(housing_id), 'Enter'])
 
     def _taptest(self):
 		os.system('killall minicom')
@@ -413,11 +467,18 @@ class embeddedTerminal(QWidget):
 		#os.system('python exec_cmd.py %s clear'%(tty))
 		self._start_process(
 			'tmux', ['send-keys', '-t', 'my_session:0', 'scripts/taptest/./taptest.sh '+tty, 'Enter'])
+			
+    def _power_switch(self):
+		self.tty1_read = self.tty1_portEdit.text()
+		tty1 = "/dev/%s"%(self.tty1_read)
+		os.system('python csu_power.py %s'%(tty1))
+		#cmd = ['python', 'csu_power.py', '/dev/'+self.tty1, '1']
+		#os.popen4(cmd)
 	
     def _showdialog(self):
 		d = QDialog()
 		self.dlayout = QVBoxLayout()
-		msg1 = QLabel("(*) Enter CSU ELID number, hit Restore RFS button then boot or apply power to the CSU.")
+		msg1 = QLabel("(*) Enter CSU ELID number, Click Restore RFS button.")
 		msg1.setFont(QFont("Arial",12))
 		msg2 = QLabel("(*) Watch the restore process on the terminal, Press Y when ask to reboot CSU in terminal.")
 		msg2.setFont(QFont("Arial",12))
@@ -699,7 +760,7 @@ class embeddedTerminal(QWidget):
     def _aboutme(self):
 		d = QDialog()
 		self.dlayout = QVBoxLayout()
-		msg1 = QLabel("CSU Restore Application v1.6")
+		msg1 = QLabel("CSU Restore Application v1.7")
 		msg1.setStyleSheet(self.label_style3)
 		msg1.setFont(QFont("Arial",12))
 		msg1.setStyleSheet(self.label_style3)
@@ -712,7 +773,7 @@ class embeddedTerminal(QWidget):
 		msg4 = QLabel("Not an Official Software release by Seabed, exclusive for CSU restoration only!")
 		msg4.setFont(QFont("Arial",12))
 		msg4.setStyleSheet(self.label_style3)
-		msg5 = QLabel("https://github/srebosura/CSU_restore 28.05.18")
+		msg5 = QLabel("https://github/srebosura/CSU_restore 23.02.20")
 		msg5.setFont(QFont("Arial",12))
 		msg5.setStyleSheet(self.label_style3)
 		self.dlayout.addWidget(msg1)
@@ -748,6 +809,7 @@ class embeddedTerminal(QWidget):
 		tty = "/dev/%s"%(self.tty)
 		ser = serial.Serial(tty,9600)
 		ser.write("(console)")
+		ser.write("\r\n")
 		ser.close()
 		self.completed += 10
 		self.progress.setValue(self.completed)
@@ -818,18 +880,21 @@ class embeddedTerminal(QWidget):
 		
     def _find_active_tty(self):
 		#os.system('ls /sys/class/tty/ |grep USB')
-		self.tty = os.popen4('ls /sys/class/tty/ |grep USB |tail -1')[1].read()
+		self.tty = os.popen4('ls /sys/class/tty/ |grep USB |head -1')[1].read()
+		self.tty1 = os.popen4('ls /sys/class/tty/ |grep USB |tail -1')[1].read()
 		self.tty_portEdit.setText(self.tty)
+		self.tty1_portEdit.setText(self.tty1)
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     main = embeddedTerminal()
-    main.setWindowTitle("CSU Restore v1.6			Case Atlantis 3			SeaBed GeoSolutions")
+    main.setWindowTitle("CSU Restore v1.7			Case Atlantis 3			SeaBed GeoSolutions")
     #main.setStyleSheet("background-color:#c4c545;")
     main.setStyleSheet("background-color:#be7646;")
     main.setWindowIcon(QIcon('ca3_icon.png'))
     os.system("killall tmux")
-    #os.system("sudo rm /var/lib/dhcp/dhcpd.leases;sudo service isc-dhcp-server restart;rm /home/obs/.ssh/known_hosts")
+    os.system("sudo rm /var/lib/dhcp/dhcpd.leases;sudo service isc-dhcp-server restart;rm /home/obs/.ssh/known_hosts")
+    time.sleep(1)
     main.show()
     sys.exit(app.exec_())
